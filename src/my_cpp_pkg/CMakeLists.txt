@@ -8,6 +8,10 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(my_cpp_interfaces REQUIRED)
+
+# Agregar include
+# include_directories("C:\\dev\\project\\capture_motion_ros2\\install\\my_cpp_interfaces\\include\\my_cpp_interfaces\\my_cpp_interfaces\\msg\\data_right.hpp")
 
 #Ejecutables
 # find dependencies
@@ -18,7 +22,7 @@ set_target_properties(neuron PROPERTIES IMPORTED_LOCATION C:/dev/project/capture
 #set_target_properties(sdl PROPERTIES LINKER_LANGUAGE CXX)
 
 add_executable(cpp_node src/readExport.cpp)
-ament_target_dependencies(cpp_node rclcpp)
+ament_target_dependencies(cpp_node rclcpp my_cpp_interfaces)
 
 target_include_directories(cpp_node PUBLIC neuron_reader/include)
 target_link_libraries(cpp_node neuron)

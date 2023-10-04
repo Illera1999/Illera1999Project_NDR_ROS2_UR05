@@ -1,5 +1,5 @@
 #include "rclcpp/rclcpp.hpp"
-#include "my_cpp_interfaces/msg/DataRight.msg"
+#include "my_cpp_interfaces/msg/data_right.hpp"
 #include "NeuronDataReader.h"
 #include "DataType.h"
 #include "iostream"
@@ -100,7 +100,7 @@ public:
 private:
     void publishDataAxisNeuron()
     {
-        const char* stringName[3];
+        std::string stringName[3];
         std::vector<float> floatDisp;
         std::vector<float> floatRota;
         auto msg = my_cpp_interfaces::msg::DataRight();
@@ -115,15 +115,10 @@ private:
             floatRota.push_back(data.rz);
             auxi ++;
         }
-        msg.name = stringName;
-        msg.desplazamiento = floatDisp;
-        msg.rotacion = floatRota;
-        msg.are_motors_ready = false;
-        msg.debug_message = "Motors are too hot!";
         pub_->publish(msg);
     }
 
-    rclcpp::Publisher<my_robot_interfaces::msg::HardwareStatus>::SharedPtr pub_;
+    rclcpp::Publisher<my_cpp_interfaces::msg::DataRight>::SharedPtr pub_;
     rclcpp::TimerBase::SharedPtr timer_;
 };
 
