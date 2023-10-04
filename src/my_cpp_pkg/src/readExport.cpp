@@ -33,9 +33,6 @@ std::ostream& operator<<(std::ostream& os, const BoneData& bone)
 int count = 0;
 static void bvhFrameDataFromHand(void* customedObj, SOCKET_REF sender, BvhDataHeader* header, float* data)
 {
-    std::cout << "Datos del brazo: " << std::endl;
-
-
     /*
     Guardamos datos:
         Variable global rightArm
@@ -64,24 +61,8 @@ static void bvhFrameDataFromHand(void* customedObj, SOCKET_REF sender, BvhDataHe
         arm.rz = data[index + 5];
 
         aux ++;
-
-        char strBuff[32];
-        std::cout << "Nombre: " << arm.name << std::endl;
-        sprintf_s(strBuff, sizeof(strBuff), "%0.3f", arm.dx);
-        std::cout << "X = {" << strBuff;
-        sprintf_s(strBuff, sizeof(strBuff), "%0.3f", arm.rx);
-        std::cout << ", " << strBuff << "} ";
-        sprintf_s(strBuff, sizeof(strBuff), "%0.3f", arm.dy);
-        std::cout << "Y = {" << strBuff;
-        sprintf_s(strBuff, sizeof(strBuff), "%0.3f", arm.ry);
-        std::cout << ", " << strBuff << "} ";
-        sprintf_s(strBuff, sizeof(strBuff), "%0.3f", arm.dz);
-        std::cout << "Z = {" << strBuff;
-        sprintf_s(strBuff, sizeof(strBuff), "%0.3f", arm.rz);
-        std::cout << ", " << strBuff << "}" << std::endl;
         //std::cout << arm << std::endl;
     }
-    std::cout << "\n" << std::endl;
 }
 
 class ExportDataAxisNeuron : public rclcpp::Node
@@ -100,21 +81,36 @@ public:
 private:
     void publishDataAxisNeuron()
     {
-        std::string stringName[3];
-        std::vector<float> floatDisp;
-        std::vector<float> floatRota;
         auto msg = my_cpp_interfaces::msg::DataRight();
         int auxi = 0;
+        int auxii = 0;
         for (BoneData data: rightArm){
-            stringName[auxi] = data.name;
-            floatDisp.push_back(data.dx);
-            floatDisp.push_back(data.dy);
-            floatDisp.push_back(data.dz);
-            floatRota.push_back(data.rx);
-            floatRota.push_back(data.ry);
-            floatRota.push_back(data.rz);
+            msg.name[auxi] = data.name;
+            msg.desplazamiento[auxii] = data.dx;
+            msg.desplazamiento[auxii + 1] = data.dy;
+            msg.desplazamiento[auxii + 2] = data.dz;
+            msg.rotacion[auxii] = data.dx;
+            msg.rotacion[auxii + 1] = data.dy;
+            msg.rotacion[auxii + 2] = data.dz;
+            auxii += 3;
             auxi ++;
         }
+        std::cout << "Datos del brazo: " << std::endl;
+        char strBuff[32];
+        std::cout << "Nombre: " << arm.name << std::endl;
+        sprintf_s(strBuff, sizeof(strBuff), "%0.3f", arm.dx);
+        std::cout << "X = {" << strBuff;
+        sprintf_s(strBuff, sizeof(strBuff), "%0.3f", arm.rx);
+        std::cout << ", " << strBuff << "} ";
+        sprintf_s(strBuff, sizeof(strBuff), "%0.3f", arm.dy);
+        std::cout << "Y = {" << strBuff;
+        sprintf_s(strBuff, sizeof(strBuff), "%0.3f", arm.ry);
+        std::cout << ", " << strBuff << "} ";
+        sprintf_s(strBuff, sizeof(strBuff), "%0.3f", arm.dz);
+        std::cout << "Z = {" << strBuff;
+        sprintf_s(strBuff, sizeof(strBuff), "%0.3f", arm.rz);
+        std::cout << ", " << strBuff << "}" << std::endl;
+        std::cout << "\n" << std::endl;
         pub_->publish(msg);
     }
 
