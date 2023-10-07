@@ -6,7 +6,9 @@
 #include "windows.h"
 #include "string"
 #include "vector"
+#include "mutex"
 
+std::mutex myMutex;
 
 struct BoneData 
 {
@@ -15,43 +17,57 @@ struct BoneData
     float rx, ry, rz;
 
 };
-/*
-Número del sensor que quieres coger datos:
-*/
 std::array<BoneData, 3> rightArm;
-/*
 
-std::ostream& operator<<(std::ostream& os, const BoneData& bone)
-{
-    os << "Nombre: " << bone.name << std::endl;
-    os << "Desplazamiento (dx, dy, dz): " << bone.dx << ", " << bone.dy << ", " << bone.dz << std::endl;
-    os << "Rotación (rx, ry, rz): " << bone.rx << ", " << bone.ry << ", " << bone.rz << std::endl;
-    return os;
-}
+/*
+Método para imprimir los datos del brazo.
 */
+void printData()
+{
+    std::cout << "Datos del brazo: " << std::endl;
+    for(BoneData data: rightArm){
+        std::cout << "Nombre: " << data.name << std::endl;
+        std::cout << "Desplazamiento: " << std::endl;
+        std::cout << "{" << data.dx << ", " << data.dy << ", "<< data.dz << "}" << std::endl;
+        std::cout << "Rotación : " << std::endl;
+        std::cout << "{" << data.rx << ", " << data.ry << ", "<< data.rz << "}" << std::endl;
+        std::cout << "\n" << std::endl;
+    }
+
+    std::cout << "\n" << std::endl; 
+}
 
 int count = 0;
 static void bvhFrameDataFromHand(void* customedObj, SOCKET_REF sender, BvhDataHeader* header, float* data)
 {
+
     /*
-    Guardamos datos:
-        Variable global rightArm
-        aux (int) por cada bucle i++ para guardar
-        cada dato de los indices 14, 15, 16.
+    Número del sensor que quieres coger datos:
+        8 -> RightArm
+        9 -> RightForeArm
+        10 -> RightHand
     */
     int bone = 8;
 
-
+    /*
+    Datos neceasrios para pasar correctamente los datos.
+    */
     int aux = 0;
     std::string name[] = {"RightArm", "RightForeArm", "RightHand"};
-    for(BoneData arm: rightArm)
+
+    /*
+    Creo un Mutex.
+    */
+    myMutex.lock();
+    /*
+    La variable BoneData lleva un "&"
+    para indicar que no queremos que arm sea una copia
+    del contenido de rightArm si no el obejto de verdad.
+    */
+    for(BoneData& arm: rightArm)
     {
         /*Index*/
-        int index = (bone  + aux) * 16;
-        if(header->WithReference)
-        {
-            index += 6;
-        }
+        int index = (bone + aux) * 6;
         arm.name = name[aux];
         arm.dx = data[index + 0];
         arm.dy = data[index + 1];
@@ -59,10 +75,9 @@ static void bvhFrameDataFromHand(void* customedObj, SOCKET_REF sender, BvhDataHe
         arm.rx = data[index + 3];
         arm.ry = data[index + 4];
         arm.rz = data[index + 5];
-
         aux ++;
-        //std::cout << arm << std::endl;
     }
+    myMutex.unlock();
 }
 
 class ExportDataAxisNeuron : public rclcpp::Node
@@ -84,33 +99,20 @@ private:
         auto msg = my_cpp_interfaces::msg::DataRight();
         int auxi = 0;
         int auxii = 0;
+        myMutex.lock();
         for (BoneData data: rightArm){
             msg.name[auxi] = data.name;
             msg.desplazamiento[auxii] = data.dx;
             msg.desplazamiento[auxii + 1] = data.dy;
             msg.desplazamiento[auxii + 2] = data.dz;
-            msg.rotacion[auxii] = data.dx;
-            msg.rotacion[auxii + 1] = data.dy;
-            msg.rotacion[auxii + 2] = data.dz;
+            msg.rotacion[auxii] = data.rx;
+            msg.rotacion[auxii + 1] = data.ry;
+            msg.rotacion[auxii + 2] = data.rz;
             auxii += 3;
             auxi ++;
         }
-        std::cout << "Datos del brazo: " << std::endl;
-        char strBuff[32];
-        std::cout << "Nombre: " << arm.name << std::endl;
-        sprintf_s(strBuff, sizeof(strBuff), "%0.3f", arm.dx);
-        std::cout << "X = {" << strBuff;
-        sprintf_s(strBuff, sizeof(strBuff), "%0.3f", arm.rx);
-        std::cout << ", " << strBuff << "} ";
-        sprintf_s(strBuff, sizeof(strBuff), "%0.3f", arm.dy);
-        std::cout << "Y = {" << strBuff;
-        sprintf_s(strBuff, sizeof(strBuff), "%0.3f", arm.ry);
-        std::cout << ", " << strBuff << "} ";
-        sprintf_s(strBuff, sizeof(strBuff), "%0.3f", arm.dz);
-        std::cout << "Z = {" << strBuff;
-        sprintf_s(strBuff, sizeof(strBuff), "%0.3f", arm.rz);
-        std::cout << ", " << strBuff << "}" << std::endl;
-        std::cout << "\n" << std::endl;
+        printData();
+        myMutex.unlock();
         pub_->publish(msg);
     }
 
