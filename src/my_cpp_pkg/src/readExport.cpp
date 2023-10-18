@@ -37,7 +37,21 @@ void printData()
     std::cout << "\n" << std::endl; 
 }
 
-int count = 0;
+void printCalcData()
+{
+    std::cout << "Datos del brazo: " << std::endl;
+    for(BoneData data: rightArm){
+        std::cout << "Nombre: " << data.name << std::endl;
+        std::cout << "Posición: " << std::endl;
+        std::cout << "{" << data.dx << ", " << data.dy << ", "<< data.dz << "}" << std::endl;
+        std::cout << "Velocidad : " << std::endl;
+        std::cout << "{" << data.rx << ", " << data.ry << ", "<< data.rz << "}" << std::endl;
+        std::cout << "\n" << std::endl;
+    }
+
+    std::cout << "\n" << std::endl; 
+}
+
 static void bvhFrameDataFromHand(void* customedObj, SOCKET_REF sender, BvhDataHeader* header, float* data)
 {
 
@@ -80,6 +94,48 @@ static void bvhFrameDataFromHand(void* customedObj, SOCKET_REF sender, BvhDataHe
     myMutex.unlock();
 }
 
+static void calculationDataFromHand(void* customedObj, SOCKET_REF sender, CalcDataHeader* header, float* data)
+{
+
+    /*
+    Número del sensor que quieres coger datos:
+        8 -> RightArm
+        9 -> RightForeArm
+        10 -> RightHand
+    */
+    int bone = 8;
+
+    /*
+    Datos neceasrios para pasar correctamente los datos.
+    */
+    int aux = 0;
+    std::string name[] = {"RightArm", "RightForeArm", "RightHand"};
+
+    /*
+    Creo un Mutex.
+    */
+    myMutex.lock();
+    /*
+    La variable BoneData lleva un "&"
+    para indicar que no queremos que arm sea una copia
+    del contenido de rightArm si no el obejto de verdad.
+    */
+    for(BoneData& arm: rightArm)
+    {
+        /*Index*/
+        int index = (bone + aux) * 16;
+        arm.name = name[aux];
+        arm.dx = data[index + 0];
+        arm.dy = data[index + 1];
+        arm.dz = data[index + 2];
+        arm.rx = data[index + 10];
+        arm.ry = data[index + 11];
+        arm.rz = data[index + 12];
+        aux ++;
+    }
+    myMutex.unlock();
+}
+
 class ExportDataAxisNeuron : public rclcpp::Node
 {
 public:
@@ -111,7 +167,7 @@ private:
             auxii += 3;
             auxi ++;
         }
-        printData();
+        printCalcData();
         myMutex.unlock();
         pub_->publish(msg);
     }
@@ -126,7 +182,8 @@ int main(int argc, char **argv)
     BRRegisterFrameDataCallback(this, bvhFrameDataFromHand);
         Método callback para la recopilación de datos.
     */
-    BRRegisterFrameDataCallback(nullptr, bvhFrameDataFromHand);
+    //BRRegisterFrameDataCallback(nullptr, bvhFrameDataFromHand);
+    BRRegisterCalculationDataCallback(nullptr, calculationDataFromHand);
 
     /*
     Variables serverIP y port:
@@ -139,7 +196,8 @@ int main(int argc, char **argv)
             7001 -> BVH Data
     */
     char serverIP[] = "127.0.0.1";
-    int port = 7001; 
+    //int port = 7001;  
+    int port = 7003;  
 
     /*
     BRConnectTo(serverIP, port);
