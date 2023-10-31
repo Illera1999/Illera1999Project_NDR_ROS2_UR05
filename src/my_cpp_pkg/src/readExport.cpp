@@ -14,10 +14,19 @@ struct BoneData
 {
     std::string name;
     float dx, dy, dz;
-    float rx, ry, rz;
+    //float rx, ry, rz;
 
 };
-std::array<BoneData, 3> rightArm;
+std::array<BoneData, 4> rightArm;
+std::string name[] = {"RightShoulder", "RightArm", "RightForeArm", "RightHand"};
+/*
+Número del sensor que quieres coger datos:
+    7 -> RightShoulder
+    8 -> RightArm
+    9 -> RightForeArm
+    10 -> RightHand
+*/
+int bone = 7;
 
 /*
 Método para imprimir los datos del brazo.
@@ -29,8 +38,8 @@ void printData()
         std::cout << "Nombre: " << data.name << std::endl;
         std::cout << "Desplazamiento: " << std::endl;
         std::cout << "{" << data.dx << ", " << data.dy << ", "<< data.dz << "}" << std::endl;
-        std::cout << "Rotación : " << std::endl;
-        std::cout << "{" << data.rx << ", " << data.ry << ", "<< data.rz << "}" << std::endl;
+        // std::cout << "Rotación : " << std::endl;
+        // std::cout << "{" << data.rx << ", " << data.ry << ", "<< data.rz << "}" << std::endl;
         std::cout << "\n" << std::endl;
     }
 
@@ -44,8 +53,8 @@ void printCalcData()
         std::cout << "Nombre: " << data.name << std::endl;
         std::cout << "Posición: " << std::endl;
         std::cout << "{" << data.dx << ", " << data.dy << ", "<< data.dz << "}" << std::endl;
-        std::cout << "Velocidad : " << std::endl;
-        std::cout << "{" << data.rx << ", " << data.ry << ", "<< data.rz << "}" << std::endl;
+        // std::cout << "Velocidad : " << std::endl;
+        // std::cout << "{" << data.rx << ", " << data.ry << ", "<< data.rz << "}" << std::endl;
         std::cout << "\n" << std::endl;
     }
 
@@ -54,20 +63,10 @@ void printCalcData()
 
 static void bvhFrameDataFromHand(void* customedObj, SOCKET_REF sender, BvhDataHeader* header, float* data)
 {
-
-    /*
-    Número del sensor que quieres coger datos:
-        8 -> RightArm
-        9 -> RightForeArm
-        10 -> RightHand
-    */
-    int bone = 8;
-
     /*
     Datos neceasrios para pasar correctamente los datos.
     */
     int aux = 0;
-    std::string name[] = {"RightArm", "RightForeArm", "RightHand"};
 
     /*
     Creo un Mutex.
@@ -86,9 +85,9 @@ static void bvhFrameDataFromHand(void* customedObj, SOCKET_REF sender, BvhDataHe
         arm.dx = data[index + 0];
         arm.dy = data[index + 1];
         arm.dz = data[index + 2];
-        arm.rx = data[index + 3];
-        arm.ry = data[index + 4];
-        arm.rz = data[index + 5];
+        // arm.rx = data[index + 3];
+        // arm.ry = data[index + 4];
+        // arm.rz = data[index + 5];
         aux ++;
     }
     myMutex.unlock();
@@ -96,20 +95,10 @@ static void bvhFrameDataFromHand(void* customedObj, SOCKET_REF sender, BvhDataHe
 
 static void calculationDataFromHand(void* customedObj, SOCKET_REF sender, CalcDataHeader* header, float* data)
 {
-
-    /*
-    Número del sensor que quieres coger datos:
-        8 -> RightArm
-        9 -> RightForeArm
-        10 -> RightHand
-    */
-    int bone = 8;
-
     /*
     Datos neceasrios para pasar correctamente los datos.
     */
     int aux = 0;
-    std::string name[] = {"RightArm", "RightForeArm", "RightHand"};
 
     /*
     Creo un Mutex.
@@ -128,9 +117,9 @@ static void calculationDataFromHand(void* customedObj, SOCKET_REF sender, CalcDa
         arm.dx = data[index + 0];
         arm.dy = data[index + 1];
         arm.dz = data[index + 2];
-        arm.rx = data[index + 10];
-        arm.ry = data[index + 11];
-        arm.rz = data[index + 12];
+        // arm.rx = data[index + 10];
+        // arm.ry = data[index + 11];
+        // arm.rz = data[index + 12];
         aux ++;
     }
     myMutex.unlock();
@@ -161,9 +150,9 @@ private:
             msg.desplazamiento[auxii] = data.dx;
             msg.desplazamiento[auxii + 1] = data.dy;
             msg.desplazamiento[auxii + 2] = data.dz;
-            msg.rotacion[auxii] = data.rx;
-            msg.rotacion[auxii + 1] = data.ry;
-            msg.rotacion[auxii + 2] = data.rz;
+            // msg.rotacion[auxii] = data.rx;
+            // msg.rotacion[auxii + 1] = data.ry;
+            // msg.rotacion[auxii + 2] = data.rz;
             auxii += 3;
             auxi ++;
         }
