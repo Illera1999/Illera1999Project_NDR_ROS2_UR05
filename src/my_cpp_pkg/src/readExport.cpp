@@ -14,7 +14,7 @@ struct BoneData
 {
     std::string name;
     float dx, dy, dz;
-    //float rx, ry, rz;
+    float qw, qx, qy, qz;
 
 };
 std::array<BoneData, 4> rightArm;
@@ -53,8 +53,8 @@ void printCalcData()
         std::cout << "Nombre: " << data.name << std::endl;
         std::cout << "Posición: " << std::endl;
         std::cout << "{" << data.dx << ", " << data.dy << ", "<< data.dz << "}" << std::endl;
-        // std::cout << "Velocidad : " << std::endl;
-        // std::cout << "{" << data.rx << ", " << data.ry << ", "<< data.rz << "}" << std::endl;
+        std::cout << "Quaternio: " << std::endl;
+        std::cout << "{" << data.qw << ", " << data.qx << ", " << data.qy << ", "<< data.qz << "}" << std::endl;
         std::cout << "\n" << std::endl;
     }
 
@@ -85,9 +85,7 @@ static void bvhFrameDataFromHand(void* customedObj, SOCKET_REF sender, BvhDataHe
         arm.dx = data[index + 0];
         arm.dy = data[index + 1];
         arm.dz = data[index + 2];
-        // arm.rx = data[index + 3];
-        // arm.ry = data[index + 4];
-        // arm.rz = data[index + 5];
+
         aux ++;
     }
     myMutex.unlock();
@@ -117,9 +115,10 @@ static void calculationDataFromHand(void* customedObj, SOCKET_REF sender, CalcDa
         arm.dx = data[index + 0];
         arm.dy = data[index + 1];
         arm.dz = data[index + 2];
-        // arm.rx = data[index + 10];
-        // arm.ry = data[index + 11];
-        // arm.rz = data[index + 12];
+        arm.qw = data[index + 6];
+        arm.qx = data[index + 7];
+        arm.qy = data[index + 8];
+        arm.qz = data[index + 9];
         aux ++;
     }
     myMutex.unlock();
@@ -147,12 +146,13 @@ private:
         myMutex.lock();
         for (BoneData data: rightArm){
             msg.name[auxi] = data.name;
-            msg.desplazamiento[auxii] = data.dx;
-            msg.desplazamiento[auxii + 1] = data.dy;
-            msg.desplazamiento[auxii + 2] = data.dz;
-            // msg.rotacion[auxii] = data.rx;
-            // msg.rotacion[auxii + 1] = data.ry;
-            // msg.rotacion[auxii + 2] = data.rz;
+            msg.position[auxii] = data.dx;
+            msg.position[auxii + 1] = data.dy;
+            msg.position[auxii + 2] = data.dz;
+            msg.quaternio[auxii] = data.qw;
+            msg.quaternio[auxii + 1] = data.qx;
+            msg.quaternio[auxii + 2] = data.qy;
+            msg.quaternio[auxii + 3] = data.qz;
             auxii += 3;
             auxi ++;
         }
