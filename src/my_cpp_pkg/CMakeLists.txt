@@ -16,10 +16,10 @@ find_package(my_cpp_interfaces REQUIRED)
 #Ejecutables
 # find dependencies
 add_library(neuron STATIC IMPORTED)
-set_target_properties(neuron PROPERTIES IMPORTED_LOCATION C:/dev/project/capture_motion_ros2/src/my_cpp_pkg/neuron_reader/lib/NeuronDataReader.lib)
+set_target_properties(neuron PROPERTIES IMPORTED_LOCATION C:/dev/project/Illera1999Project_NDR_ROS2_UR05/src/my_cpp_pkg/neuron_reader/lib/NeuronDataReader.lib)
 
-#add_library(sdl C:/dev/project/capture_motion_ros2/src/my_cpp_pkg/neuron_reader/lib/NeuronDataReader.dll)
-#set_target_properties(sdl PROPERTIES LINKER_LANGUAGE CXX)
+# add_library(sdl C:/dev/project/capture_motion_ros2/src/my_cpp_pkg/neuron_reader/lib/NeuronDataReader.dll)
+# set_target_properties(sdl PROPERTIES LINKER_LANGUAGE CXX)
 
 add_executable(cpp_node src/readExport.cpp)
 ament_target_dependencies(cpp_node rclcpp my_cpp_interfaces)

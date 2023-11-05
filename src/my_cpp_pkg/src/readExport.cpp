@@ -14,7 +14,7 @@ struct BoneData
 {
     std::string name;
     float dx, dy, dz;
-    float qw, qx, qy, qz;
+    // float qw, qx, qy, qz;
 
 };
 std::array<BoneData, 4> rightArm;
@@ -53,8 +53,8 @@ void printCalcData()
         std::cout << "Nombre: " << data.name << std::endl;
         std::cout << "Posición: " << std::endl;
         std::cout << "{" << data.dx << ", " << data.dy << ", "<< data.dz << "}" << std::endl;
-        std::cout << "Quaternio: " << std::endl;
-        std::cout << "{" << data.qw << ", " << data.qx << ", " << data.qy << ", "<< data.qz << "}" << std::endl;
+        // std::cout << "Quaternio: " << std::endl;
+        // std::cout << "{" << data.qw << ", " << data.qx << ", " << data.qy << ", "<< data.qz << "}" << std::endl;
         std::cout << "\n" << std::endl;
     }
 
@@ -115,10 +115,10 @@ static void calculationDataFromHand(void* customedObj, SOCKET_REF sender, CalcDa
         arm.dx = data[index + 0];
         arm.dy = data[index + 1];
         arm.dz = data[index + 2];
-        arm.qw = data[index + 6];
-        arm.qx = data[index + 7];
-        arm.qy = data[index + 8];
-        arm.qz = data[index + 9];
+        // arm.qw = data[index + 6];
+        // arm.qx = data[index + 7];
+        // arm.qy = data[index + 8];
+        // arm.qz = data[index + 9];
         aux ++;
     }
     myMutex.unlock();
@@ -149,10 +149,10 @@ private:
             msg.position[auxii] = data.dx;
             msg.position[auxii + 1] = data.dy;
             msg.position[auxii + 2] = data.dz;
-            msg.quaternio[auxii] = data.qw;
-            msg.quaternio[auxii + 1] = data.qx;
-            msg.quaternio[auxii + 2] = data.qy;
-            msg.quaternio[auxii + 3] = data.qz;
+            // msg.quaternio[auxii] = data.qw;
+            // msg.quaternio[auxii + 1] = data.qx;
+            // msg.quaternio[auxii + 2] = data.qy;
+            // msg.quaternio[auxii + 3] = data.qz;
             auxii += 3;
             auxi ++;
         }
