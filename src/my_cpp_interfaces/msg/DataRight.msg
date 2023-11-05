@@ -1,3 +1,2 @@
-string[3] name
-float32[9] desplazamiento
-float32[9] rotacion
+string[4] name
+float32[12] position
