@@ -2,35 +2,35 @@
 import rclpy
 import time
 import rtde_control
-import math
+import numpy as np
+import transforms3d.quaternions as quaternions
 from rclpy.node import Node
 from my_cpp_interfaces.msg import DataRight
 
-rtde_c = rtde_control.RTDEControlInterface("192.168.0.100")
-pi = math.pi
+# rtde_c = rtde_control.RTDEControlInterface("192.168.0.100")
+pi = np.pi
 
 class BoneData:
     def __init__(self, name, position, quaternio):
         self.RightShoulder = [name[0], position[0], position[1], position[2], quaternio[0], quaternio[1], quaternio[2], quaternio[3]]
-        self.RightShoulderVakue = [name[0], position[0] - position[0], position[1] - position[1], position[2] - position[2]]
-
         self.RightArm = [name[1], position[3], position[4], position[5], quaternio[4], quaternio[5], quaternio[6], quaternio[7]]
-        self.RightArmValue = [name[1], position[3] - position[0], position[4] - position[1], position[5] - position[2], self.RightArm[4]]
         self.RightForeArm = [name[2], position[6], position[7],  position[8], quaternio[8], quaternio[9], quaternio[10], quaternio[11]]
         self.RightHand = [name[3], position[9], position[10], position[11], quaternio[12], quaternio[13], quaternio[14], quaternio[15]]
         self.name = name
-        self.position = position        
+        self.position = position    
+
+    def get_position_quaternio_arm(self):
+        return self.RightArm
+
+    def get_position_quaternio_foreArm(self):
+        return self.RightForeArm
 
     def printData(self):
         print("------------------------------")
         print("Datos del brazo: ")
-
         print(str(self.RightArm))
-        print(str(self.RightArmValue))
-
-        # print(str(self.RightArmValue))
-        # print(str(self.RightForeArm))
-        # print(str(self.RightHand))
+        print("Datos del brazo: ")
+        print(str(self.RightForeArm))
         print("------------------------------")
 
 class ImportData(Node): 
@@ -43,7 +43,7 @@ class ImportData(Node):
     def callback_data(self,msg):
         rightArm = BoneData(msg.name, msg.position, msg.quaternio)
         rightArm.printData()
-        base, hombro = calcular_angulo_base_hombro(rightArm.RightArmValue)
+        base, hombro = calcular_angulo_base_hombro(rightArm)
 
         # rtde_c.moveJ([1.5708, hombro, -0, -1.5708, 1.5708, 0], 1.5 , 1.5)
         # rtde_c.moveJ([base, -1.5708, -0, -1.5708, 1.5708, 0], 1.5, 1.5)
@@ -51,45 +51,57 @@ class ImportData(Node):
         #rtde_c.moveJ([1.5708, -base_vertical, -0, -1.5708, 1.5708, 0], 1, 1)
         #rtde_c.moveJ([1.5708, 0, ante_brazo_horizontal, -1.5708, 1.5708, 0], 1, 1)
 
-def calcular_angulo_base_hombro(datos):
-    x = datos[1]
-    y = datos[2]
-    z = datos[3]
-    quaternio = datos[4]
+def calcular_angulo_base_hombro(right):
+    datos = right.get_position_quaternio_arm()
+    datos1 = right.get_position_quaternio_foreArm()
+    print("---------------- Soy el brazo ----------------")
+    x, y, z = cuaternion_a_matriz_transformacion(datos[4:])
+    print("---------------- Soy el ante brazo ----------------")
+    x1, y1, z1 = cuaternion_a_matriz_transformacion(datos1[4:])
+    radianes, angulo = calcular_angulo_entre_vectores(x, x1)
+    # radianes, angulo = calcular_angulo_entre_vectores([0,1,0], y)
+    return radianes, angulo
 
-    # -----------------------     Calcula el ángulo entre el vector y el eje x,z usando atan2 ---------------------------------
-    angulo_radianes_horizontal = 0
+def cuaternion_a_matriz_transformacion(cuaternion):
+    # Convierte el cuaternión a una matriz de rotación
+    matriz_rotacion = quaternions.quat2mat(cuaternion)
+    print("Matriz de rotación \n")
+    print(matriz_rotacion)
 
-    # -----------------------     Calcula el angulo formado por el plano y,z ---------------------------------
+    # Obtiene las columnas de la matriz de rotación
+    columna_x = matriz_rotacion[:, 0]
+    columna_y = matriz_rotacion[:, 1]
+    columna_z = matriz_rotacion[:, 2]
 
-    angulo_radianes_vertical = math.atan2(y,z)
+    return columna_x, columna_y, columna_z
 
-    if angulo_radianes_vertical > 0 and quaternio <= 0:
-        angulo_radianes_vertical = 0
-    if angulo_radianes_vertical > 0 and quaternio > 0:
-        angulo_radianes_vertical = -pi
-    
-    
-    angulo_grados_vertical = math.degrees(angulo_radianes_vertical)
+def calcular_angulo_entre_vectores(vector_a, vector_b):
+    # producto_punto = np.dot(vector_a, vector_b)
+    # magnitud_a = np.linalg.norm(vector_a)
+    # magnitud_b = np.linalg.norm(vector_b)
 
+    # coseno_theta = producto_punto / (magnitud_a * magnitud_b)
+    # angulo_radianes = np.arccos(coseno_theta)
+    # angulo_grados = np.degrees(angulo_radianes)
+    producto_punto = np.dot(vector_a, vector_b)
+    angulo_radianes = np.arccos(producto_punto)
 
-    print("--------------------------------------")
-    print("Posicion:" + str(datos))
-    print("Angulo vertical hombro:")
-    print(str(int(angulo_grados_vertical)) + "º \n")
-    # print("Angulo horizontal hombro:")
-    # print(str(int(angulo_grados_horizontal)) + "º \n")
+    angulo_grados = np.degrees(angulo_radianes)
 
-    return angulo_radianes_horizontal, angulo_radianes_vertical
+    print("-------------")
+    print(f"Ángulo en radianes: {angulo_radianes}")
+    print(f"Ángulo en grados: {angulo_grados}")
+
+    return angulo_radianes, angulo_grados
 
 def main(args=None):
-    rtde_c.moveJ([1.5708, 0, 0, -1.5708, 1.5708, 0], 1, 1)
+    # rtde_c.moveJ([1.5708, 0, 0, -1.5708, 1.5708, 0], 1, 1)
     time.sleep(2)
     rclpy.init(args=args)
     node = ImportData() 
     rclpy.spin(node)
     rclpy.shutdown()
-    rtde_c.stopJ()
+    # rtde_c.stopJ()
     return 0
 
 if __name__ == "__main__":
