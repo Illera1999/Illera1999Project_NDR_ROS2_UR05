@@ -19,18 +19,29 @@ class BoneData:
         self.name = name
         self.position = position    
 
+    
+    def get_position_quaternio_shoulder(self):
+        return self.RightShoulder
+
     def get_position_quaternio_arm(self):
         return self.RightArm
 
     def get_position_quaternio_foreArm(self):
         return self.RightForeArm
 
+    def get_position_quaternio_hand(self):
+        return self.RightForeArm
+
     def printData(self):
         print("------------------------------")
-        print("Datos del brazo: ")
+        print("Datos del Hombro: ")
+        print(str(self.RightShoulder))
+        print("Datos del Brazo: ")
         print(str(self.RightArm))
-        print("Datos del brazo: ")
+        print("Datos del Ante brazo: ")
         print(str(self.RightForeArm))
+        print("Datos del Mano: ")
+        print(str(self.RightHand))
         print("------------------------------")
 
 class ImportData(Node): 
@@ -58,8 +69,7 @@ def calcular_angulo_base_hombro(right):
     x, y, z = cuaternion_a_matriz_transformacion(datos[4:])
     print("---------------- Soy el ante brazo ----------------")
     x1, y1, z1 = cuaternion_a_matriz_transformacion(datos1[4:])
-    radianes, angulo = calcular_angulo_entre_vectores(x, x1)
-    # radianes, angulo = calcular_angulo_entre_vectores([0,1,0], y)
+    radianes, angulo = calcular_angulo_entre_vectores([1,0,0], y)
     return radianes, angulo
 
 def cuaternion_a_matriz_transformacion(cuaternion):
@@ -76,21 +86,28 @@ def cuaternion_a_matriz_transformacion(cuaternion):
     return columna_x, columna_y, columna_z
 
 def calcular_angulo_entre_vectores(vector_a, vector_b):
-    # producto_punto = np.dot(vector_a, vector_b)
-    # magnitud_a = np.linalg.norm(vector_a)
-    # magnitud_b = np.linalg.norm(vector_b)
-
-    # coseno_theta = producto_punto / (magnitud_a * magnitud_b)
-    # angulo_radianes = np.arccos(coseno_theta)
-    # angulo_grados = np.degrees(angulo_radianes)
+    # Calcular el producto punto
     producto_punto = np.dot(vector_a, vector_b)
-    angulo_radianes = np.arccos(producto_punto)
+
+    # Calcular las magnitudes de los vectores
+    magnitud_v = np.linalg.norm(vector_a)
+    magnitud_w = np.linalg.norm(vector_b)
+
+    # Calcular el coseno del ángulo
+    coseno_theta = producto_punto / (magnitud_v * magnitud_w)
+
+    # Calcular el ángulo en radianes
+    angulo_radianes = np.arccos(coseno_theta)
+    # producto_punto = np.dot(vector_a, vector_b)
+    # angulo_radianes = np.arccos(producto_punto)
 
     angulo_grados = np.degrees(angulo_radianes)
 
     print("-------------")
     print(f"Ángulo en radianes: {angulo_radianes}")
     print(f"Ángulo en grados: {angulo_grados}")
+    print(f"Producto punto: {producto_punto}")
+
 
     return angulo_radianes, angulo_grados
 
