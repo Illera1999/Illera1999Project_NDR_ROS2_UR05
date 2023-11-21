@@ -114,7 +114,7 @@ Matriz de rotación
 Producto punto: 0.7713800679570146
 
 
-Datos 5:
+Datos 5: NO FUNCIONA
 
 Datos del Hombro: 
 ['RightShoulder', 0.040897217, -0.15468489, -0.5584, 1.0, 0.0, 0.0, 0.0]

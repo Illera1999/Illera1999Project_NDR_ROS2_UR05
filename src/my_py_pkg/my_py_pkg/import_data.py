@@ -3,6 +3,7 @@ import rclpy
 import time
 import rtde_control
 import numpy as np
+from calculate_angle import base_angel, hombro_angle
 import transforms3d.quaternions as quaternions
 from rclpy.node import Node
 from my_cpp_interfaces.msg import DataRight
@@ -19,19 +20,13 @@ class BoneData:
         self.name = name
         self.position = position    
 
+    def two_points_of_arm(self):
+        puntos = [[dato[1], dato[2], dato[3]] for dato in [self.RightShoulder, self.RightArm]]
+
+        primer_dato = puntos[0]
+        puntos = [[dato[0] - primer_dato[0], dato[1] - primer_dato[1], dato[2] - primer_dato[2]] for dato in puntos]
+        return puntos[1]
     
-    def get_position_quaternio_shoulder(self):
-        return self.RightShoulder
-
-    def get_position_quaternio_arm(self):
-        return self.RightArm
-
-    def get_position_quaternio_foreArm(self):
-        return self.RightForeArm
-
-    def get_position_quaternio_hand(self):
-        return self.RightForeArm
-
     def printData(self):
         print("------------------------------")
         print("Datos del Hombro: ")
@@ -54,62 +49,9 @@ class ImportData(Node):
     def callback_data(self,msg):
         rightArm = BoneData(msg.name, msg.position, msg.quaternio)
         rightArm.printData()
-        base, hombro = calcular_angulo_base_hombro(rightArm)
-
-        # rtde_c.moveJ([1.5708, hombro, -0, -1.5708, 1.5708, 0], 1.5 , 1.5)
-        # rtde_c.moveJ([base, -1.5708, -0, -1.5708, 1.5708, 0], 1.5, 1.5)
-        # rtde_c.moveJ([base, hombro, -0, -1.5708, 1.5708, 0], 2, 2)
-        #rtde_c.moveJ([1.5708, -base_vertical, -0, -1.5708, 1.5708, 0], 1, 1)
-        #rtde_c.moveJ([1.5708, 0, ante_brazo_horizontal, -1.5708, 1.5708, 0], 1, 1)
-
-def calcular_angulo_base_hombro(right):
-    datos = right.get_position_quaternio_arm()
-    datos1 = right.get_position_quaternio_foreArm()
-    print("---------------- Soy el brazo ----------------")
-    x, y, z = cuaternion_a_matriz_transformacion(datos[4:])
-    print("---------------- Soy el ante brazo ----------------")
-    x1, y1, z1 = cuaternion_a_matriz_transformacion(datos1[4:])
-    radianes, angulo = calcular_angulo_entre_vectores([1,0,0], y)
-    return radianes, angulo
-
-def cuaternion_a_matriz_transformacion(cuaternion):
-    # Convierte el cuaternión a una matriz de rotación
-    matriz_rotacion = quaternions.quat2mat(cuaternion)
-    print("Matriz de rotación \n")
-    print(matriz_rotacion)
-
-    # Obtiene las columnas de la matriz de rotación
-    columna_x = matriz_rotacion[:, 0]
-    columna_y = matriz_rotacion[:, 1]
-    columna_z = matriz_rotacion[:, 2]
-
-    return columna_x, columna_y, columna_z
-
-def calcular_angulo_entre_vectores(vector_a, vector_b):
-    # Calcular el producto punto
-    producto_punto = np.dot(vector_a, vector_b)
-
-    # Calcular las magnitudes de los vectores
-    magnitud_v = np.linalg.norm(vector_a)
-    magnitud_w = np.linalg.norm(vector_b)
-
-    # Calcular el coseno del ángulo
-    coseno_theta = producto_punto / (magnitud_v * magnitud_w)
-
-    # Calcular el ángulo en radianes
-    angulo_radianes = np.arccos(coseno_theta)
-    # producto_punto = np.dot(vector_a, vector_b)
-    # angulo_radianes = np.arccos(producto_punto)
-
-    angulo_grados = np.degrees(angulo_radianes)
-
-    print("-------------")
-    print(f"Ángulo en radianes: {angulo_radianes}")
-    print(f"Ángulo en grados: {angulo_grados}")
-    print(f"Producto punto: {producto_punto}")
-
-
-    return angulo_radianes, angulo_grados
+        base = base_angel(rightArm.two_points_of_arm())
+        hombro = hombro_angle(rightArm.two_points_of_arm())
+        # degrees_from_axis_yz(rightArm.two_points_of_arm())
 
 def main(args=None):
     # rtde_c.moveJ([1.5708, 0, 0, -1.5708, 1.5708, 0], 1, 1)
