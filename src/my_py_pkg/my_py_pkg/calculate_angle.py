@@ -1,18 +1,41 @@
 import numpy as np
 
+pi = np.pi
+
 def base_angel(punto_objetivo):
+    vector_referencia = np.array([0, 0, -1])  # Dirección de referencia (eje Z)
 
+    # Normalizar los vectores para asegurarse de que tengan magnitudes de 1
+    vector_normalizado = punto_objetivo / np.linalg.norm(punto_objetivo)
+    vector_referencia_normalizado = vector_referencia / np.linalg.norm(vector_referencia)
 
-    vector_objetivo = punto_objetivo
+    # Calcular el producto punto entre los dos vectores
+    producto_punto = np.dot(vector_normalizado, vector_referencia_normalizado)
 
-    # Ángulo en el plano XY
-    angulo_xy = np.arctan2(vector_objetivo[1], vector_objetivo[0])
+    # Calcular el ángulo entre los vectores usando la función inversa del coseno (arccos)
+    angulo_apertura_radianes = np.arccos(producto_punto)
 
-    # Convertir el ángulo a grados
-    angulo_xy_grados = np.degrees(angulo_xy)
+    angulo_apertura_radianes += 1.5708
 
-    print(f"El ángulo para la base es : {angulo_xy_grados} grados")
-    return angulo_xy_grados
+    if (punto_objetivo[1] < 0):
+        angulo_apertura_radianes -= pi
+        if (punto_objetivo[2] < 0):
+            angulo_apertura_radianes = -angulo_apertura_radianes
+        if (punto_objetivo[2] > 0):
+            angulo_apertura_radianes = -angulo_apertura_radianes
+
+    # Convertir el ángulo a grados y ajustamos angulos.
+    # if angulo_apertura_radianes > (3/2)*pi:
+    #     angulo_apertura_radianes = (3/2)*pi
+    # if angulo_apertura_radianes < -(1/2)*pi:
+    #     angulo_apertura_radianes = -(1/2)*pi
+
+    angulo_apertura_grados = np.degrees(angulo_apertura_radianes)
+
+    print(f"Punto objetivo: {punto_objetivo}")
+    print(f"El ángulo de apertura es: {angulo_apertura_grados} grados")
+
+    return angulo_apertura_radianes
 
 
 
@@ -28,38 +51,23 @@ def angulo_entre_lineas(normal, recta):
     # Convertir el ángulo a grados si es necesario
     alpha_degrees = np.degrees(alpha)
 
+    alpha -= 1.5708
     alpha_degrees -= 90
 
-    if recta[2] >= 0:
-        alpha_degrees += 180
-
+    if alpha < 0:
+        alpha = 0
 
     print(f"El ángulo para el hombro es: {alpha_degrees} grados")
-    return alpha_degrees
+    return alpha
 
 def hombro_angle(punto):
     # Vector normal al plano (ejemplo: a lo largo de x)
-    vector_normal = np.array([1, 0, 0])
+    vector_normal = np.array([-1, 0, 0])
     vector_recta = punto
 
+    print(f"Punto objetivo: {punto}")
     angle = angulo_entre_lineas(vector_normal,vector_recta)
     return angle
 
 
-dato1 = ['RightShoulder', 0.040897217, -0.15468489, -0.5584, 1.0, 0.0, 0.0, 0.0]
-dato2 = ['RightArm', 0.035634425, -0.41940695, -0.54728657, 0.6743311, 0.007569223, 0.00384615, -0.73839927]
-
-# Extraer valores de posición de dato1
-posicion_dato1 = dato1[1:4]  # Elementos 1 al 3 (0-indexed)
-# Extraer valores de posición de dato2
-posicion_dato2 = dato2[1:4]  # Elementos 1 al 3 (0-indexed)
-
-# Restar los elementos correspondientes
-punto_origen = [pos1 - pos2 for pos1, pos2 in zip(posicion_dato1, posicion_dato1)]
-punto_objetivo = [pos2 - pos1 for pos1, pos2 in zip(posicion_dato1, posicion_dato2)]
-
-# Mostrar resultados
-print("Dato1:", punto_origen)
-print("Dato2:", punto_objetivo)
-base_angel(punto_objetivo)
-hombro_angle(punto_objetivo)
+angulo = base_angel((0, -0.25, 1))

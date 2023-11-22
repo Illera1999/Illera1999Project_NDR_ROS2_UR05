@@ -3,13 +3,12 @@ import rclpy
 import time
 import rtde_control
 import numpy as np
-from calculate_angle import base_angel, hombro_angle
+from my_py_pkg import calculate_angle
 import transforms3d.quaternions as quaternions
 from rclpy.node import Node
 from my_cpp_interfaces.msg import DataRight
 
-# rtde_c = rtde_control.RTDEControlInterface("192.168.0.100")
-pi = np.pi
+rtde_c = rtde_control.RTDEControlInterface("192.168.0.100")
 
 class BoneData:
     def __init__(self, name, position, quaternio):
@@ -49,12 +48,12 @@ class ImportData(Node):
     def callback_data(self,msg):
         rightArm = BoneData(msg.name, msg.position, msg.quaternio)
         rightArm.printData()
-        base = base_angel(rightArm.two_points_of_arm())
-        hombro = hombro_angle(rightArm.two_points_of_arm())
-        # degrees_from_axis_yz(rightArm.two_points_of_arm())
+        base = calculate_angle.base_angel(rightArm.two_points_of_arm())
+        hombro = calculate_angle.hombro_angle(rightArm.two_points_of_arm())
+        rtde_c.moveJ([1.5708 - hombro, -base, 0, -1.5708, 1.5708, 0], 1.5, 1.5)
 
 def main(args=None):
-    # rtde_c.moveJ([1.5708, 0, 0, -1.5708, 1.5708, 0], 1, 1)
+    rtde_c.moveJ([1.5708, 0, 0, -1.5708, 1.5708, 0], 1, 1)
     time.sleep(2)
     rclpy.init(args=args)
     node = ImportData() 
