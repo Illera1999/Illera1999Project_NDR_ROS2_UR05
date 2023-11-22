@@ -48,16 +48,21 @@ def angulo_entre_lineas(normal, recta):
     # Calcular el ángulo en radianes
     alpha = np.arccos(dot_product / (magnitude1 * magnitude2))
 
+    alpha -= 1.5708
+    alpha = -alpha
+
+    if recta[0] > 0:
+        alpha = 0
+        alpha_degrees = 0
+
     # Convertir el ángulo a grados si es necesario
     alpha_degrees = np.degrees(alpha)
-
-    alpha -= 1.5708
-    alpha_degrees -= 90
-
-    if alpha < 0:
-        alpha = 0
-
+    if alpha_degrees > 90:
+        alpha = (1/2)*pi 
+        alpha_degrees = 90
+    
     print(f"El ángulo para el hombro es: {alpha_degrees} grados")
+    
     return alpha
 
 def hombro_angle(punto):
@@ -70,4 +75,5 @@ def hombro_angle(punto):
     return angle
 
 
-angulo = base_angel((0, -0.25, 1))
+# angulo = base_angel((0, -0.25, 1))
+# angulo = hombro_angle((-1,0,0))
