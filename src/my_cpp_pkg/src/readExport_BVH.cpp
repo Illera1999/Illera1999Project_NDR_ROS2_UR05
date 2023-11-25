@@ -1,5 +1,5 @@
 #include "rclcpp/rclcpp.hpp"
-#include "my_cpp_interfaces/msg/data_right.hpp"
+#include "my_cpp_interfaces/msg/data_right_bvh.hpp"
 #include "NeuronDataReader.h"
 #include "DataType.h"
 #include "iostream"
@@ -13,21 +13,16 @@ std::mutex myMutex;
 struct BoneData 
 {
     std::string name;
-    float dx, dy, dz;
-    float qw, qx, qy, qz;
+    float rx, ry, rz;
 
 };
 
-std::array<BoneData, 4> rightArm;
-std::string name[] = {"RightShoulder", "RightArm", "RightForeArm", "RightHand"};
+std::array<BoneData, 3> rightArm;
+std::string nameBone[] = { "RightArm", "RightForeArm", "RightHand"};
 /*
 Número del sensor que quieres coger datos:
-    7 -> RightShoulder
-    8 -> RightArm
-    9 -> RightForeArm
-    10 -> RightHand
+    45 -> RightArm
 */
-int bone = 7;
 
 /*
 Método para imprimir los datos del brazo.
@@ -38,23 +33,27 @@ void printCalcData()
     std::cout << "Datos del brazo: " << std::endl;
     for(BoneData data: rightArm){
         std::cout << "Nombre: " << data.name << std::endl;
-        std::cout << "Posición: " << std::endl;
-        std::cout << "{" << data.dx << ", " << data.dy << ", "<< data.dz << "}" << std::endl;
-        std::cout << "Quaternio: " << std::endl;
-        std::cout << "{" << data.qw << ", " << data.qx << ", " << data.qy << ", "<< data.qz << "}" << std::endl;
+        std::cout << "Rotaciones: " << std::endl;
+        std::cout << "{" << data.rx << ", " << data.ry << ", "<< data.rz << "}" << std::endl;
         std::cout << "\n" << std::endl;
     }
 
     std::cout << "\n" << std::endl; 
 }
 
-static void calculationDataFromHand(void* customedObj, SOCKET_REF sender, CalcDataHeader* header, float* data)
+static void frameDataFromHand(void* customedObj, SOCKET_REF sender, BvhDataHeader* header, float* data)
 {
+    // for (int i = 0; i < 100; ++i){
+    //     if (data[i] > 94){
+    //         std::cout << "{ ------------------------------- }" << std::endl;
+    //         std::cout << "{" << data[i] << " - posicion " << i << "}" << std::endl;
+    //     }
+    // }
     /*
     Datos neceasrios para pasar correctamente los datos.
     */
     int aux = 0;
-
+    int auxi = 0;
     /*
     Creo un Mutex.
     */
@@ -66,17 +65,12 @@ static void calculationDataFromHand(void* customedObj, SOCKET_REF sender, CalcDa
     */
     for(BoneData& arm: rightArm)
     {
-        /*Index*/
-        int index = (bone + aux) * 16;
-        arm.name = name[aux];
-        arm.dx = data[index + 0];
-        arm.dy = data[index + 1];
-        arm.dz = data[index + 2];
-        arm.qw = data[index + 6];
-        arm.qx = data[index + 7];
-        arm.qy = data[index + 8];
-        arm.qz = data[index + 9];
-        aux ++;
+        arm.name = nameBone[aux];
+        arm.rx = data[45 + auxi];
+        arm.ry = data[46 + auxi];
+        arm.rz = data[47 + auxi];
+        aux = aux + 1;
+        auxi = auxi +3;
     }
     myMutex.unlock();
 }
@@ -86,7 +80,7 @@ class ExportDataAxisNeuron : public rclcpp::Node
 public:
     ExportDataAxisNeuron() : Node("export_data_axisneuron")
     {
-        pub_ = this->create_publisher<my_cpp_interfaces::msg::DataRight>(
+        pub_ = this->create_publisher<my_cpp_interfaces::msg::DataRightBVH>(
             "data_right_arm", 10);
         timer_ = this->create_wall_timer(
             std::chrono::seconds(1),
@@ -97,30 +91,24 @@ public:
 private:
     void publishDataAxisNeuron()
     {
-        auto msg = my_cpp_interfaces::msg::DataRight();
+        auto msg = my_cpp_interfaces::msg::DataRightBVH();
         int auxi = 0;
         int auxii = 0;
-        int auxiii = 0;
         myMutex.lock();
         for (const BoneData& data: rightArm){
             msg.name[auxi] = data.name;
-            msg.position[auxii] = data.dx;
-            msg.position[auxii + 1] = data.dy;
-            msg.position[auxii + 2] = data.dz;
-            msg.quaternio[auxiii] = data.qw;
-            msg.quaternio[auxiii + 1] = data.qx;
-            msg.quaternio[auxiii + 2] = data.qy;
-            msg.quaternio[auxiii + 3] = data.qz;
+            msg.rotation[auxii] = data.rx;
+            msg.rotation[auxii + 1] = data.ry;
+            msg.rotation[auxii + 2] = data.rz;
+            auxi += 1;
             auxii += 3;
-            auxiii += 4;
-            auxi ++;
         }
         printCalcData();
         myMutex.unlock();
         pub_->publish(msg);
     }
 
-    rclcpp::Publisher<my_cpp_interfaces::msg::DataRight>::SharedPtr pub_;
+    rclcpp::Publisher<my_cpp_interfaces::msg::DataRightBVH>::SharedPtr pub_;
     rclcpp::TimerBase::SharedPtr timer_;
 };
 
@@ -130,7 +118,7 @@ int main(int argc, char **argv)
     BRRegisterFrameDataCallback(this, bvhFrameDataFromHand);
         Método callback para la recopilación de datos.
     */
-    BRRegisterCalculationDataCallback(nullptr, calculationDataFromHand);
+    BRRegisterFrameDataCallback(nullptr, frameDataFromHand);
 
     /*
     Variables serverIP y port:
@@ -143,8 +131,8 @@ int main(int argc, char **argv)
             7001 -> BVH Data
     */
     char serverIP[] = "127.0.0.1";
-    //int port = 7001;  
-    int port = 7003;  
+    int port = 7001;  
+    // int port = 7003;  
 
     /*
     BRConnectTo(serverIP, port);

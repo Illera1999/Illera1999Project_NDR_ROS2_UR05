@@ -26,11 +26,18 @@ ament_target_dependencies(cpp_node rclcpp my_cpp_interfaces)
 
 target_include_directories(cpp_node PUBLIC neuron_reader/include)
 target_link_libraries(cpp_node neuron)
-#target_link_libraries(cpp_node sdl)
 
+add_executable(bvh_read src/readExport_BVH.cpp)
+ament_target_dependencies(bvh_read rclcpp my_cpp_interfaces)
+
+target_include_directories(bvh_read PUBLIC neuron_reader/include)
+target_link_libraries(bvh_read neuron)
 
 install(TARGETS
   cpp_node DESTINATION lib/${PROJECT_NAME}
 )
 
+install(TARGETS
+  bvh_read DESTINATION lib/${PROJECT_NAME}
+)
 ament_package()
