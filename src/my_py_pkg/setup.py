@@ -21,6 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             'import_node = my_py_pkg.import_data:main',
+            'import_nodeBVH = my_py_pkg.import_dataBVH:main',
         ],
     },
 )

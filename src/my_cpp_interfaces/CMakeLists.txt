@@ -16,6 +16,7 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/DataRight.msg"
+  "msg/DataRightBVH.msg"
 )
 
 ament_package()
