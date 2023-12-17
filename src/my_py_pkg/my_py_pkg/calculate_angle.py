@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from math import acos, atan, asin, cos, sin, radians, degrees
 
 def quaternion_to_rotation_matrix(quaternion):
     """
@@ -71,6 +72,64 @@ def plot_arm_and_forearm(arm_pos, arm_vector, forearm_pos, forearm_vector, angle
     plt.show()
 
 
+def angle_for_arm(rotacion1, rotacion2, rotacion3, a, a1,):
+
+
+    titax = radians(rotacion2)
+    titay = radians(rotacion1)
+    titaz = radians(rotacion3)
+
+    tita2z = asin(cos(titax) * sin(titaz))
+
+
+
+    tita2y = asin((cos(titaz) * sin(titay) - cos(titay) * sin(titax) * sin(titaz)) / cos(tita2z))
+
+    tita2y = degrees(tita2y)
+    tita2z = degrees(tita2z)
+
+    if a1 - a > 0:
+
+        tita2y = 180 - tita2y
+
+    return tita2y, tita2z
+
+def angle_for_hand(rotacion1, rotacion2, rotacion3):
+    titax = radians(rotacion2)
+    titay = radians(rotacion1)
+    titaz = radians(rotacion3)
+
+    tita3x = atan((cos(titay) * sin(titax) * sin(titaz) - cos(titaz) * sin(titay))/(cos(titax) * sin(titaz)))
+    # print ("tita3x " + str(tita3x))
+    # print ("tita3x " + str(degrees(tita3x)))
+
+
+    tita3z = asin((cos(titax) * sin(titaz)) / cos(tita3x))
+    # tita3z = acos(cos(titay) * cos(titaz) + sin(titax) * sin(titay) * sin(titaz))
+
+    # tita3x = degrees(tita3x)
+    tita3z = degrees(tita3z)
+
+    return tita3z
+
+def angle_for_forearm(rotacion1, rotacion2, rotacion3):
+    titax = radians(rotacion2)
+    titay = radians(rotacion1)
+    titaz = radians(rotacion3)
+
+    tita3x = atan((cos(titay) * sin(titax) * sin(titaz) - cos(titaz) * sin(titay))/(cos(titax) * sin(titaz)))
+    # print ("tita3x " + str(tita3x))
+    # print ("tita3x " + str(degrees(tita3x)))
+
+
+    # tita3z = asin((cos(titax) * sin(titaz)) / cos(tita3x))
+    # tita3z = acos(cos(titay) * cos(titaz) + sin(titax) * sin(titay) * sin(titaz))
+
+    tita3x = degrees(tita3x)
+    # tita3z = degrees(tita3z)
+
+    return tita3x
+
 
 # Using the provided data
 # arm_quat = [0.88207424, 0.34301504, 0.06129225, 0.31710738]
@@ -83,15 +142,15 @@ def plot_arm_and_forearm(arm_pos, arm_vector, forearm_pos, forearm_vector, angle
 # forearm_quat = [0.761293, -0.0236154, 0.647292, 0.0302769]
 # forearm_pos = [0.182314, 0.329937, -0.779002]
 
-arm_quat = [0.920419, -0.0256769, -0.0707999, 0.383646]
-arm_pos = [0.114518, 0.304706, -0.505085]
-forearm_quat = [0.896905, 0.0451076, -0.0408769, -0.438046]
-forearm_pos = [0.29413, 0.118875, -0.476491]
+# arm_quat = [0.920419, -0.0256769, -0.0707999, 0.383646]
+# arm_pos = [0.114518, 0.304706, -0.505085]
+# forearm_quat = [0.896905, 0.0451076, -0.0408769, -0.438046]
+# forearm_pos = [0.29413, 0.118875, -0.476491]
 
-angle, arm_vector, forearm_vector, arm_pos, forearm_pos = calculate_elbow_angle(arm_quat, arm_pos, forearm_quat, forearm_pos)
+# angle, arm_vector, forearm_vector, arm_pos, forearm_pos = calculate_elbow_angle(arm_quat, arm_pos, forearm_quat, forearm_pos)
 
 # Plot the arm and forearm orientation
-plot_arm_and_forearm(arm_pos, arm_vector, forearm_pos, forearm_vector, angle)
+# plot_arm_and_forearm(arm_pos, arm_vector, forearm_pos, forearm_vector, angle)
 
 
 
