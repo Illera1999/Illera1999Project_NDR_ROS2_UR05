@@ -14,6 +14,8 @@ struct BoneData
 {
     std::string name;
     float rx, ry, rz;
+    float dx, dy, dz;
+    float qw, qx, qy, qz;
 
 };
 
@@ -35,25 +37,45 @@ void printCalcData()
         std::cout << "Nombre: " << data.name << std::endl;
         std::cout << "Rotaciones: " << std::endl;
         std::cout << "{" << data.rx << ", " << data.ry << ", "<< data.rz << "}" << std::endl;
+        std::cout << "Position: " << std::endl;
+        std::cout << "{" << data.dx << ", " << data.dy << ", "<< data.dz << "}" << std::endl;
+        std::cout << "Quaternios: " << std::endl;
+        std::cout << "{" << data.qw << ", " << data.qx << ", "<< data.qy << ", " << data.qz << "}" << std::endl;
         std::cout << "\n" << std::endl;
     }
 
     std::cout << "\n" << std::endl; 
 }
 
+static void CalcDataFromHand(void* customedObj, SOCKET_REF sender, CalcDataHeader* header, float* data)
+{
+    int bone = 8;
+    
+    myMutex.lock();
+    /*
+    La variable BoneData lleva un "&"
+    para indicar que no queremos que arm sea una copia
+    del contenido de rightArm si no el obejto de verdad.
+    */
+    for(BoneData& arm: rightArm)
+    {
+        arm.dx = data[bone * 16 + 0];
+        arm.dy = data[bone * 16 + 1];
+        arm.dz = data[bone * 16 + 2];
+        arm.qw = data[bone * 16 + 6];
+        arm.qx = data[bone * 16 + 7];
+        arm.qy = data[bone * 16 + 8];
+        arm.qz = data[bone * 16 + 9];
+        bone = bone + 1;
+    }
+    myMutex.unlock();
+
+}
+
 static void frameDataFromHand(void* customedObj, SOCKET_REF sender, BvhDataHeader* header, float* data)
 {
-    // for (int i = 0; i < 100; ++i){
-    //     if (data[i] > 94){
-    //         std::cout << "{ ------------------------------- }" << std::endl;
-    //         std::cout << "{" << data[i] << " - posicion " << i << "}" << std::endl;
-    //     }
-    // }
-    /*
-    Datos neceasrios para pasar correctamente los datos.
-    */
     int aux = 0;
-    int auxi = 0;
+    int sds = 14;
     /*
     Creo un Mutex.
     */
@@ -66,11 +88,11 @@ static void frameDataFromHand(void* customedObj, SOCKET_REF sender, BvhDataHeade
     for(BoneData& arm: rightArm)
     {
         arm.name = nameBone[aux];
-        arm.rx = data[45 + auxi];
-        arm.ry = data[46 + auxi];
-        arm.rz = data[47 + auxi];
-        aux = aux + 1;
-        auxi = auxi +3;
+        arm.rx = data[3 + (sds * 3)];
+        arm.ry = data[3 + (sds * 3) + 1];
+        arm.rz = data[3 + (sds * 3) + 2];
+        sds = sds + 1;
+        aux += 1;
     }
     myMutex.unlock();
 }
@@ -94,14 +116,23 @@ private:
         auto msg = my_cpp_interfaces::msg::DataRightBVH();
         int auxi = 0;
         int auxii = 0;
+        int auxiii = 0;
         myMutex.lock();
         for (const BoneData& data: rightArm){
             msg.name[auxi] = data.name;
             msg.rotation[auxii] = data.rx;
             msg.rotation[auxii + 1] = data.ry;
             msg.rotation[auxii + 2] = data.rz;
+            msg.position[auxii] = data.dx;
+            msg.position[auxii + 1] = data.dy;
+            msg.position[auxii + 2] = data.dz;
+            msg.quaternio[auxiii] = data.qw;
+            msg.quaternio[auxiii + 1] = data.qx;
+            msg.quaternio[auxiii + 2] = data.qy;
+            msg.quaternio[auxiii + 3] = data.qz;
             auxi += 1;
             auxii += 3;
+            auxiii += 4;
         }
         printCalcData();
         myMutex.unlock();
@@ -118,6 +149,8 @@ int main(int argc, char **argv)
     BRRegisterFrameDataCallback(this, bvhFrameDataFromHand);
         Método callback para la recopilación de datos.
     */
+
+    BRRegisterCalculationDataCallback(nullptr, CalcDataFromHand);
     BRRegisterFrameDataCallback(nullptr, frameDataFromHand);
 
     /*
@@ -131,30 +164,44 @@ int main(int argc, char **argv)
             7001 -> BVH Data
     */
     char serverIP[] = "127.0.0.1";
-    int port = 7001;  
-    // int port = 7003;  
+    int port_bvh = 7001;  
+    int port_calc = 7003;  
 
     /*
     BRConnectTo(serverIP, port);
         Crea un cliente TCP/UDP para conectarse al 
             servidor.
     */
-    SOCKET_REF socketRef = BRConnectTo(serverIP, port);
+    SOCKET_REF socketRef_bvh = BRConnectTo(serverIP, port_bvh);
+    SOCKET_REF socketRef_calc = BRConnectTo(serverIP, port_calc);
 
     while(true)
     {
-        if (socketRef != NULL) 
+        if (socketRef_bvh != NULL && socketRef_calc != NULL) 
         {
             /*
             BRGetSocketStatus(socketRef);
                 Revisa el estado del Socket.
                 Despues se publica por pantalla.
             */
-            SocketStatus ssStatus = BRGetSocketStatus(socketRef);
-            switch (ssStatus)
+            SocketStatus ssStatus_bvh = BRGetSocketStatus(socketRef_bvh);
+            SocketStatus ssStatus_calc = BRGetSocketStatus(socketRef_calc);
+            switch (ssStatus_bvh)
             {
                 case CS_Running:
-                    std::cout << "Conectado \n";
+                    std::cout << "Conectado  BVH\n";
+                    break;
+                case CS_Starting:
+                    std::cout << "Iniciando ... \n";
+                    break;
+                case CS_OffWork:
+                    std::cout << "OffLine \n";
+                    break;
+            } 
+            switch (ssStatus_calc)
+            {
+                case CS_Running:
+                    std::cout << "Conectado Calc_BVH\n";
                     break;
                 case CS_Starting:
                     std::cout << "Iniciando ... \n";
@@ -174,5 +221,6 @@ int main(int argc, char **argv)
         }
         Sleep(500);
     }
-    BRCloseSocket(socketRef);
+    BRCloseSocket(socketRef_bvh);
+    BRCloseSocket(socketRef_calc);
 }
